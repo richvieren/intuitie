@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Intuïtie</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inknut+Antiqua:wght@300;400;500;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="bg-fixed">
+  <div class="bg-mesh"></div>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="blob blob-4"></div>
+  <div class="noise"></div>
+</div>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="tGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4B3CA1"/>
+      <stop offset="100%" stop-color="#322779"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<!-- LANDING -->
+<div class="screen active" id="screen-landing">
+  <div class="landing-inner">
+    <div class="sigil">
+      <div class="sigil-outer"></div>
+      <div class="sigil-mid"></div>
+      <div class="sigil-core">✦</div>
+    </div>
+
+    <div class="eyebrow">Een Twaalfwekenprogramma</div>
+    <div class="landing-title"><em>Intuïtie</em></div>
+    <div class="landing-sub">Herontwaak de stem van je ziel</div>
+
+    <div class="gold-rule"><span>✦</span></div>
+
+    <div id="landing-new">
+      <p class="landing-desc">Ontwikkel je intuïtie, vergroot je bewustzijn en ontdek je aangeboren helderziende gaven via begeleide wekelijkse oefeningen.</p>
+      <button class="btn btn-primary" onclick="showAuthScreen()">Begin de Reis</button>
+    </div>
+
+    <div id="landing-returning" style="display:none">
+      <div class="stats-glass">
+        <div class="stat-pill">
+          <div class="stat-num" id="stat-weeks">0</div>
+          <div class="stat-label">Weken Voltooid</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-num" id="stat-exercises">0</div>
+          <div class="stat-label">Notities</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-num" id="stat-days">0</div>
+          <div class="stat-label">Actieve Dagen</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="showMap()">Ga Verder</button>
+        <button class="btn btn-ghost" onclick="resetProgress()">Opnieuw Beginnen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH -->
+<div class="screen" id="screen-auth">
+  <div class="auth-inner">
+    <div class="sigil" style="width:70px;height:70px;margin-bottom:2rem">
+      <div class="sigil-outer"></div>
+      <div class="sigil-mid"></div>
+      <div class="sigil-core" style="font-size:0.8rem">✦</div>
+    </div>
+    <div class="auth-title">Welkom</div>
+    <p class="auth-sub">Voer je e-mailadres in. Je ontvangt een magische link om direct in te loggen — geen wachtwoord nodig.</p>
+    <form class="auth-form" onsubmit="submitAuthForm(event)">
+      <input
+        type="email"
+        id="auth-email"
+        class="auth-input"
+        placeholder="jouw@email.nl"
+        autocomplete="email"
+        required
+      />
+      <button type="submit" id="auth-submit" class="btn btn-primary">Stuur Mij een Link</button>
+    </form>
+    <div class="auth-error" id="auth-error"></div>
+    <button class="auth-back" onclick="showScreen('screen-landing')">← Terug</button>
+  </div>
+</div>
+
+<!-- CHECK EMAIL -->
+<div class="screen" id="screen-check-email">
+  <div class="auth-inner">
+    <div class="check-email-icon">✉️</div>
+    <div class="auth-title">Controleer je inbox</div>
+    <p class="auth-sub">We hebben een magische link naar je e-mail gestuurd. Klik op de link om in te loggen. De link verloopt na 1 uur.</p>
+    <button class="auth-back" onclick="showAuthScreen()">Ander e-mailadres proberen</button>
+  </div>
+</div>
+
+<!-- PAYWALL -->
+<div class="screen" id="screen-paywall">
+  <div class="paywall-inner">
+    <div class="sigil" style="width:80px;height:80px;margin-bottom:2rem">
+      <div class="sigil-outer"></div>
+      <div class="sigil-mid"></div>
+      <div class="sigil-core" style="font-size:0.85rem">✦</div>
+    </div>
+    <div class="paywall-title">Je intuïtie wacht</div>
+    <p class="paywall-sub">Krijg toegang tot het volledige 12-weekse Intuïtie programma — begeleide lessen, oefeningen en dagelijkse voortgang.</p>
+    <div class="gold-rule" style="margin-bottom:2rem"><span>✦</span></div>
+    <div class="paywall-actions">
+      <button class="btn btn-primary" onclick="goToCheckout()">Krijg Toegang</button>
+      <button class="auth-back" onclick="signOut().then(() => showScreen('screen-landing'))">Uitloggen</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAP -->
+<div class="screen" id="screen-map">
+  <div class="map-header">
+    <div class="map-title">Jouw <em>Reis</em></div>
+    <button class="btn btn-ghost" onclick="showScreen('screen-landing')">← Home</button>
+  </div>
+  <div class="week-grid" id="week-grid"></div>
+</div>
+
+<!-- WEEK -->
+<div class="screen" id="screen-week">
+  <div id="week-content"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Supabase JS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Load order matters: auth.js first (creates window.sb), then db.js, then app.js -->
+<script src="auth.js"></script>
+<script src="db.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
