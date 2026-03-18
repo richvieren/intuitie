@@ -755,39 +755,48 @@ function saveState() {
   }, 500);
 }
 
-async function init() {
-  createBlobAnimation();
-  await handleAuthRedirect();
-
-  const session = await getSession();
-
-  if (!session) {
-    // Not logged in — show landing with auth CTAs
-    initLandingPublic();
-    showScreen('screen-landing');
-    return;
-  }
-
-  // Logged in — set up user context
+async function handleSession(session) {
   currentUserId = session.user.id;
   await upsertProfile(session);
 
-  // Load saved progress
   const saved = await loadProgress(currentUserId);
-  if (saved) {
-    state = { ...state, ...saved };
-  }
+  if (saved) state = { ...state, ...saved };
 
-  // Check paid access
   const hasAccess = await checkAccess(session.user);
   if (!hasAccess) {
     showScreen('screen-paywall');
     return;
   }
 
-  // Paid + logged in — show landing with stats
   initLanding();
   showScreen('screen-landing');
+}
+
+async function init() {
+  createBlobAnimation();
+
+  // Magic link uses PKCE: Supabase puts ?code= in the URL after redirect.
+  // We must wait for Supabase to exchange the code before getSession() works.
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('code')) {
+    window.sb.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        history.replaceState(null, '', window.location.pathname);
+        await handleSession(session);
+      }
+    });
+    return; // Wait for onAuthStateChange callback above
+  }
+
+  const session = await getSession();
+
+  if (!session) {
+    initLandingPublic();
+    showScreen('screen-landing');
+    return;
+  }
+
+  await handleSession(session);
 }
 
 function createBlobAnimation() {
