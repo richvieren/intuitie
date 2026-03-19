@@ -768,8 +768,7 @@ async function handleSession(session) {
     return;
   }
 
-  initLanding();
-  showScreen('screen-landing');
+  showMap();
 }
 
 async function init() {
@@ -1185,7 +1184,7 @@ async function submitAuthForm(e) {
   const { error } = await sendMagicLink(email);
 
   if (error) {
-    errorEl.textContent = 'Er ging iets mis. Probeer het opnieuw.';
+    errorEl.textContent = error.message || error.status || JSON.stringify(error);
     submitBtn.disabled = false;
     submitBtn.textContent = 'Stuur Mij een Link';
     return;
