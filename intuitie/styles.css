@@ -1236,3 +1236,11 @@ body {
   align-items: center;
   gap: 1rem;
 }
+
+/* ===== LOADING SCREEN ===== */
+.loading-inner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}

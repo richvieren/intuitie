@@ -778,7 +778,8 @@ async function init() {
   // Supabase fires INITIAL_SESSION with null first (exchange not done yet),
   // then SIGNED_IN once the exchange completes. We must not show any screen
   // during the exchange — wait for SIGNED_IN instead.
-  const inAuthRedirect = window.location.search.includes('code=');
+  const inAuthRedirect = window.location.search.includes('code=') ||
+                         window.location.hash.includes('access_token=');
 
   window.sb.auth.onAuthStateChange(async (event, session) => {
     if (window.location.search.includes('code=') || window.location.hash.includes('access_token=')) {
@@ -794,6 +795,11 @@ async function init() {
         initLandingPublic();
         showScreen('screen-landing');
       }
+      // inAuthRedirect + null: loading screen stays, waiting for SIGNED_IN
+    } else if (event === 'SIGNED_OUT') {
+      currentUserId = null;
+      initLandingPublic();
+      showScreen('screen-landing');
     }
   });
 }
