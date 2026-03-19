@@ -775,28 +775,24 @@ async function handleSession(session) {
 async function init() {
   createBlobAnimation();
 
-  // Magic link uses PKCE: Supabase puts ?code= in the URL after redirect.
-  // We must wait for Supabase to exchange the code before getSession() works.
-  const params = new URLSearchParams(window.location.search);
-  if (params.has('code')) {
-    window.sb.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        history.replaceState(null, '', window.location.pathname);
+  // onAuthStateChange fires INITIAL_SESSION on every page load (with or without session)
+  // and SIGNED_IN after a magic link code exchange completes.
+  // This handles all cases: existing session, new login, magic link redirect.
+  window.sb.auth.onAuthStateChange(async (event, session) => {
+    // Clean up URL if it contains auth params from magic link redirect
+    if (window.location.search.includes('code=') || window.location.hash.includes('access_token=')) {
+      history.replaceState(null, '', window.location.pathname);
+    }
+
+    if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+      if (session) {
         await handleSession(session);
+      } else {
+        initLandingPublic();
+        showScreen('screen-landing');
       }
-    });
-    return; // Wait for onAuthStateChange callback above
-  }
-
-  const session = await getSession();
-
-  if (!session) {
-    initLandingPublic();
-    showScreen('screen-landing');
-    return;
-  }
-
-  await handleSession(session);
+    }
+  });
 }
 
 function createBlobAnimation() {
