@@ -775,22 +775,28 @@ async function handleSession(session) {
 async function init() {
   createBlobAnimation();
 
-  // onAuthStateChange fires INITIAL_SESSION on every page load (with or without session)
-  // and SIGNED_IN after a magic link code exchange completes.
-  // This handles all cases: existing session, new login, magic link redirect.
+  // If URL has ?code= it means we're in the middle of a magic link exchange.
+  // Supabase fires INITIAL_SESSION with null first (exchange not done yet),
+  // then SIGNED_IN once the exchange completes. We must not show any screen
+  // during the exchange — wait for SIGNED_IN instead.
+  const inAuthRedirect = window.location.search.includes('code=');
+
   window.sb.auth.onAuthStateChange(async (event, session) => {
-    // Clean up URL if it contains auth params from magic link redirect
     if (window.location.search.includes('code=') || window.location.hash.includes('access_token=')) {
       history.replaceState(null, '', window.location.pathname);
     }
 
-    if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+    if (event === 'SIGNED_IN' && session) {
+      await handleSession(session);
+    } else if (event === 'INITIAL_SESSION') {
       if (session) {
         await handleSession(session);
-      } else {
+      } else if (!inAuthRedirect) {
+        // No session, not a magic link redirect — show public landing
         initLandingPublic();
         showScreen('screen-landing');
       }
+      // If inAuthRedirect and no session yet: wait silently for SIGNED_IN
     }
   });
 }
