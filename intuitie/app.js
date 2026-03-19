@@ -796,7 +796,6 @@ async function init() {
   }, 6000);
 
   window.sb.auth.onAuthStateChange(async (event, session) => {
-    clearTimeout(loadingTimeout);
     if (window.location.search.includes('code=') || window.location.hash.includes('access_token=')) {
       history.replaceState(null, '', window.location.pathname);
     }
