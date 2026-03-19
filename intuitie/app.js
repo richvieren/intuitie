@@ -756,19 +756,25 @@ function saveState() {
 }
 
 async function handleSession(session) {
-  currentUserId = session.user.id;
-  await upsertProfile(session);
+  try {
+    currentUserId = session.user.id;
+    await upsertProfile(session);
 
-  const saved = await loadProgress(currentUserId);
-  if (saved) state = { ...state, ...saved };
+    const saved = await loadProgress(currentUserId);
+    if (saved) state = { ...state, ...saved };
 
-  const hasAccess = await checkAccess(session.user);
-  if (!hasAccess) {
-    showScreen('screen-paywall');
-    return;
+    const hasAccess = await checkAccess(session.user);
+    if (!hasAccess) {
+      showScreen('screen-paywall');
+      return;
+    }
+
+    showMap();
+  } catch (err) {
+    console.error('handleSession error:', err);
+    initLandingPublic();
+    showScreen('screen-landing');
   }
-
-  showMap();
 }
 
 async function init() {
@@ -781,7 +787,16 @@ async function init() {
   const inAuthRedirect = window.location.search.includes('code=') ||
                          window.location.hash.includes('access_token=');
 
+  // Safety net: if auth takes more than 6s, show landing (network issues / dead session)
+  const loadingTimeout = setTimeout(() => {
+    if (document.getElementById('screen-loading').classList.contains('active')) {
+      initLandingPublic();
+      showScreen('screen-landing');
+    }
+  }, 6000);
+
   window.sb.auth.onAuthStateChange(async (event, session) => {
+    clearTimeout(loadingTimeout);
     if (window.location.search.includes('code=') || window.location.hash.includes('access_token=')) {
       history.replaceState(null, '', window.location.pathname);
     }
