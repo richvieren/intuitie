@@ -785,17 +785,15 @@ async function init() {
       history.replaceState(null, '', window.location.pathname);
     }
 
-    if (event === 'SIGNED_IN' && session) {
-      await handleSession(session);
+    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+      if (session) await handleSession(session);
     } else if (event === 'INITIAL_SESSION') {
       if (session) {
         await handleSession(session);
       } else if (!inAuthRedirect) {
-        // No session, not a magic link redirect — show public landing
         initLandingPublic();
         showScreen('screen-landing');
       }
-      // If inAuthRedirect and no session yet: wait silently for SIGNED_IN
     }
   });
 }
