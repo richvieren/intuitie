@@ -1222,8 +1222,8 @@ function showAuthScreen() {
 // ===== PAYWALL SCREEN =====
 
 function goToCheckout() {
-  // Replace THRIVECART_CHECKOUT_URL with actual ThriveCart product URL (set in Task 10)
-  window.location.href = 'THRIVECART_CHECKOUT_URL';
+  // TODO: replace with real ThriveCart checkout URL before going live
+  alert('Checkout URL nog niet ingesteld. Neem contact op met de beheerder.');
 }
 
 // ===== RESET (async version) =====
