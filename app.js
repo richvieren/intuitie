@@ -783,6 +783,11 @@ async function init() {
   const inAuthRedirect = window.location.search.includes('code=') ||
                          window.location.hash.includes('access_token=');
 
+  // Detect ThriveCart post-purchase redirect — auto-send magic link
+  const params = new URLSearchParams(window.location.search);
+  const tcEmail = params.get('thrivecart[customer][email]');
+  const inThriveCartRedirect = !!tcEmail && !inAuthRedirect;
+
   const loadingTimeout = setTimeout(() => {
     if (document.getElementById('screen-loading').classList.contains('active')) {
       initLandingPublic();
@@ -800,6 +805,11 @@ async function init() {
     } else if (event === 'INITIAL_SESSION') {
       if (session) {
         await handleSession(session);
+      } else if (inThriveCartRedirect) {
+        // New purchase — clean URL, auto-send magic link, show check-email screen
+        history.replaceState(null, '', window.location.pathname);
+        await sendMagicLink(tcEmail);
+        showScreen('screen-check-email');
       } else if (!inAuthRedirect) {
         initLandingPublic();
         showScreen('screen-landing');
