@@ -7,7 +7,12 @@ const supabaseAdmin = () => createClient(
 
 const APP_URL = 'https://richvieren.github.io/intuitie/';
 
-// Grant access to a customer email
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': 'https://richvieren.github.io',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
 async function grantAccess(email: string, orderId: string | null) {
   const supabase = supabaseAdmin();
   const { error } = await supabase.from('access_grants').upsert({
@@ -18,7 +23,6 @@ async function grantAccess(email: string, orderId: string | null) {
   if (error) throw error;
 }
 
-// Generate a Supabase magic link and return the action URL
 async function generateMagicLink(email: string): Promise<string> {
   const supabase = supabaseAdmin();
   const { data, error } = await supabase.auth.admin.generateLink({
@@ -31,33 +35,52 @@ async function generateMagicLink(email: string): Promise<string> {
 }
 
 Deno.serve(async (req) => {
+  // CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: CORS_HEADERS });
+  }
+
   const url = new URL(req.url);
 
-  // ── GET: ThriveCart success page redirect ──────────────────────────────────
-  // ThriveCart appends customer data as query params to the success URL.
-  // We grant access, generate a magic link, and redirect the buyer instantly.
+  // ── GET: handles both ThriveCart redirect and app-initiated fetch ──────────
   if (req.method === 'GET' || req.method === 'HEAD') {
     const email = url.searchParams.get('thrivecart[customer][email]');
 
-    // No email = ThriveCart pinging the URL to verify it's reachable
+    // No email = ThriveCart pinging the URL to verify reachability
     if (!email) {
       return new Response('OK', { status: 200 });
     }
 
     const orderId = url.searchParams.get('thrivecart[order_id]');
+    const wantsJson = url.searchParams.get('format') === 'json';
 
     try {
       await grantAccess(email, orderId);
       const magicLink = await generateMagicLink(email);
+
+      // App fetches this endpoint and expects JSON back
+      if (wantsJson) {
+        return new Response(JSON.stringify({ url: magicLink }), {
+          status: 200,
+          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // ThriveCart uses EF as success URL — redirect directly
       return Response.redirect(magicLink, 302);
     } catch (err) {
       console.error('Success redirect error:', err);
-      // Fallback: send to app, buyer can request magic link manually
+      if (wantsJson) {
+        return new Response(JSON.stringify({ error: 'Failed to generate login link' }), {
+          status: 500,
+          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' }
+        });
+      }
       return Response.redirect(APP_URL, 302);
     }
   }
 
-  // ── POST: ThriveCart webhook (backup / order events) ──────────────────────
+  // ── POST: ThriveCart webhook (backup for order events) ────────────────────
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 });
   }

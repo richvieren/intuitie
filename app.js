@@ -780,8 +780,30 @@ async function handleSession(session) {
 async function init() {
   createBlobAnimation();
 
+  const params = new URLSearchParams(window.location.search);
+  const tcEmail = params.get('thrivecart[customer][email]');
+  const tcOrderId = params.get('thrivecart[order_id]');
   const inAuthRedirect = window.location.search.includes('code=') ||
                          window.location.hash.includes('access_token=');
+
+  // ThriveCart post-purchase redirect — fetch magic link from Edge Function and redirect
+  if (tcEmail && !inAuthRedirect) {
+    history.replaceState(null, '', window.location.pathname);
+    try {
+      const efUrl = new URL('https://wpwcikenckjstmrdhoyx.supabase.co/functions/v1/thrivecart-webhook');
+      efUrl.searchParams.set('thrivecart[customer][email]', tcEmail);
+      if (tcOrderId) efUrl.searchParams.set('thrivecart[order_id]', tcOrderId);
+      efUrl.searchParams.set('format', 'json');
+      const res = await fetch(efUrl.toString());
+      const { url } = await res.json();
+      if (url) { window.location.href = url; return; }
+    } catch (err) {
+      console.error('Magic link fetch error:', err);
+    }
+    // Fallback: show auth screen so buyer can request manually
+    showScreen('screen-auth');
+    return;
+  }
 
   const loadingTimeout = setTimeout(() => {
     if (document.getElementById('screen-loading').classList.contains('active')) {
