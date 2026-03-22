@@ -780,14 +780,9 @@ async function handleSession(session) {
 async function init() {
   createBlobAnimation();
 
-  // If URL has ?code= it means we're in the middle of a magic link exchange.
-  // Supabase fires INITIAL_SESSION with null first (exchange not done yet),
-  // then SIGNED_IN once the exchange completes. We must not show any screen
-  // during the exchange — wait for SIGNED_IN instead.
   const inAuthRedirect = window.location.search.includes('code=') ||
                          window.location.hash.includes('access_token=');
 
-  // Safety net: if auth takes more than 6s, show landing (network issues / dead session)
   const loadingTimeout = setTimeout(() => {
     if (document.getElementById('screen-loading').classList.contains('active')) {
       initLandingPublic();
@@ -809,7 +804,6 @@ async function init() {
         initLandingPublic();
         showScreen('screen-landing');
       }
-      // inAuthRedirect + null: loading screen stays, waiting for SIGNED_IN
     } else if (event === 'SIGNED_OUT') {
       currentUserId = null;
       initLandingPublic();

@@ -2,5 +2,7 @@
 .env.local
 supabase/.env
 supabase/functions/.env
+supabase/.temp/
 node_modules/
 .DS_Store
+_source.html
