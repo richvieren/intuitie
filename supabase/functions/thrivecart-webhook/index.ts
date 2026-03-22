@@ -1,6 +1,10 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 Deno.serve(async (req) => {
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    return new Response('OK', { status: 200 });
+  }
+
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 });
   }
