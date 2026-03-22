@@ -1216,8 +1216,7 @@ function showAuthScreen() {
 // ===== PAYWALL SCREEN =====
 
 function goToCheckout() {
-  // TODO: replace with real ThriveCart checkout URL before going live
-  alert('Checkout URL nog niet ingesteld. Neem contact op met de beheerder.');
+  window.location.href = 'https://aeon.thrivecart.com/intuitie/';
 }
 
 // ===== RESET (async version) =====
