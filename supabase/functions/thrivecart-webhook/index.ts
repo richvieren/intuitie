@@ -5,10 +5,10 @@ const supabaseAdmin = () => createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 );
 
-const APP_URL = 'https://richvieren.github.io/intuitie/';
+const APP_URL = 'https://app.intuitie.club/';
 
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': 'https://richvieren.github.io',
+  'Access-Control-Allow-Origin': 'https://app.intuitie.club',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
