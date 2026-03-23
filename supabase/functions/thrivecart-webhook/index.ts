@@ -16,7 +16,7 @@ const CORS_HEADERS = {
 async function grantAccess(email: string, orderId: string | null) {
   const supabase = supabaseAdmin();
   const { error } = await supabase.from('access_grants').upsert({
-    email,
+    email: email.toLowerCase(),
     product: 'intuitie',
     order_id: orderId ?? null,
   }, { onConflict: 'email' });
@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
 
   // ── GET: handles both ThriveCart redirect and app-initiated fetch ──────────
   if (req.method === 'GET' || req.method === 'HEAD') {
-    const email = url.searchParams.get('thrivecart[customer][email]');
+    const email = url.searchParams.get('thrivecart[customer][email]')?.toLowerCase() ?? null;
 
     // No email = ThriveCart pinging the URL to verify reachability
     if (!email) {
@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
     return new Response('OK', { status: 200 });
   }
 
-  const email = formData.get('customer[email]') as string;
+  const email = (formData.get('customer[email]') as string)?.toLowerCase();
   const orderId = formData.get('order_id') as string;
 
   if (!email) {

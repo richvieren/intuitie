@@ -765,7 +765,7 @@ async function handleSession(session) {
 
     const hasAccess = await checkAccess(session.user);
     if (!hasAccess) {
-      showScreen('screen-paywall');
+      showPaywall(session.user.email);
       return;
     }
 
@@ -807,8 +807,7 @@ async function init() {
 
   const loadingTimeout = setTimeout(() => {
     if (document.getElementById('screen-loading').classList.contains('active')) {
-      initLandingPublic();
-      showScreen('screen-landing');
+      showScreen('screen-auth');
     }
   }, 6000);
 
@@ -823,13 +822,11 @@ async function init() {
       if (session) {
         await handleSession(session);
       } else if (!inAuthRedirect) {
-        initLandingPublic();
-        showScreen('screen-landing');
+        showScreen('screen-auth');
       }
     } else if (event === 'SIGNED_OUT') {
       currentUserId = null;
-      initLandingPublic();
-      showScreen('screen-landing');
+      showScreen('screen-auth');
     }
   });
 }
@@ -1237,8 +1234,18 @@ function showAuthScreen() {
 
 // ===== PAYWALL SCREEN =====
 
+let _paywallEmail = null;
+
+function showPaywall(email) {
+  _paywallEmail = email || null;
+  const emailEl = document.getElementById('paywall-email');
+  if (emailEl) emailEl.textContent = email ? 'Ingelogd als ' + email : '';
+  showScreen('screen-paywall');
+}
+
 function goToCheckout() {
-  window.location.href = 'https://aeon.thrivecart.com/intuitie/';
+  const base = 'https://aeon.thrivecart.com/intuitie/';
+  window.location.href = _paywallEmail ? base + '?email=' + encodeURIComponent(_paywallEmail) : base;
 }
 
 // ===== RESET (async version) =====
